@@ -1,3 +1,1 @@
 # backend-fg
-
-Terminar Operaciones
