@@ -1,0 +1,16 @@
+from .usuario import Usuario as UsuarioResource
+from .usuario import Usuarios as UsuariosResource
+from .operacion import Operacion as OperacionResource
+from .operacion import Operaciones as OperacionesResource
+from .operacion import OperacionesBulk as OperacionesBulkResource
+from .operacion import OperacionesExcel as OperacionesExcelResource
+from .concepto import Concepto as ConceptoResource
+from .concepto import Conceptos as ConceptosResource
+from .categoria import Categoria as CategoriaResource
+from .categoria import Categorias as CategoriasResource
+from .subcategoria import Subcategoria as SubcategoriaResource
+from .subcategoria import Subcategorias as SubcategoriasResource
+from .persona import Persona as PersonaResource
+from .persona import Personas as PersonasResource
+from .archivo import ArchivoOperacion as ArchivoOperacionResource
+from .archivo import ArchivosOperaciones as ArchivosOperacionesResource

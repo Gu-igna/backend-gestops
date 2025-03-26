@@ -1,0 +1,7 @@
+GestiónHermanos
+
+¡Bienvenido {{usuario.nombre}} {{usuario.apellido}}!
+----------------------------------------------------
+
+Tu contraseña es: {{new_password}}
+Inicia sesión y modifícala en el siguiente enlace: http://localhost:4200/login
