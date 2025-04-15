@@ -77,19 +77,18 @@ class Usuarios(Resource):
             return {'message': str(e)}, 500
 
     def _aplicar_busqueda_general(self, query):
-        """Aplica filtros de búsqueda al query"""
+        """Aplica filtros de búsqueda al query."""
         search = request.args.get('busqueda')
 
         if search:
             conditions = [
+                UsuarioModel.id.ilike(f'%{search}%'),
                 UsuarioModel.nombre.ilike(f'%{search}%'),
                 UsuarioModel.apellido.ilike(f'%{search}%'),
                 UsuarioModel.email.ilike(f'%{search}%'),
-                UsuarioModel.rol.ilike(f'%{search}%'),
-                UsuarioModel.id.ilike(f'%{search}%')
+                UsuarioModel.rol.ilike(f'%{search}%')
             ]
             
             return query.filter(or_(*conditions))
         
-        # Si no hay búsqueda, retorna el query original
         return query
