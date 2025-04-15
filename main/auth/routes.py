@@ -27,7 +27,7 @@ def login():
 def register():
     data = request.get_json()
 
-    required_fields = ['nombre', 'apellido', 'email']
+    required_fields = ['nombre', 'apellido', 'email', 'password']
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Faltan campos obligatorios"}), 400
 
