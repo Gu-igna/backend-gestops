@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import request
 from .. import db
-from sqlalchemy import and_
+from sqlalchemy import or_
 from main.models import PersonaModel
 from main.auth.decorators import role_required
 import re
@@ -55,7 +55,7 @@ class Personas(Resource):
 
             query = db.session.query(PersonaModel)
 
-            query = self._aplicar_filtros_busqueda(query)
+            query = self._aplicar_busqueda_general(query)
 
             personas = query.paginate(
                 page=page, 
@@ -72,21 +72,19 @@ class Personas(Resource):
         except Exception as e:
             return {'message': str(e)}, 500
 
-    def _aplicar_filtros_busqueda(self, query):
-        """Aplica filtros de búsqueda al query basado en los parámetros de la request."""
-        filtros = []
+    def _aplicar_busqueda_general(self, query):
+        """Aplica filtros de búsqueda al query."""
+        search = request.args.get('busqueda')
 
-        campos_busqueda = {
-            'id': PersonaModel.id,
-            'cuit': PersonaModel.cuit,
-            'razon_social': PersonaModel.razon_social
-        }
+        if search:
+            conditions = [
+                PersonaModel.id.ilike(f'%{search}%'),
+                PersonaModel.cuit.ilike(f'%{search}%'),
+                PersonaModel.razon_social.ilike(f'%{search}%'),
+            ]
 
-        for campo, valor in request.args.items():
-            if campo in campos_busqueda:
-                filtros.append(campos_busqueda[campo].like(f"%{valor}%"))
-
-        return query.filter(and_(*filtros)) if filtros else query
+            return query.filter(or_(*conditions))
+        return query
 
 
     @role_required(roles=["admin", "supervisor"])
