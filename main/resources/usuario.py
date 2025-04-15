@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import request
 from .. import db
-from sqlalchemy import and_
+from sqlalchemy import or_
 from main.models import UsuarioModel
 from main.auth.decorators import role_required
 
@@ -59,7 +59,7 @@ class Usuarios(Resource):
 
             query = db.session.query(UsuarioModel)
 
-            query = self._aplicar_filtros_busqueda(query)
+            query = self._aplicar_busqueda_general(query)
 
             usuarios = query.paginate(
                 page=page, 
@@ -76,20 +76,20 @@ class Usuarios(Resource):
         except Exception as e:
             return {'message': str(e)}, 500
 
-    def _aplicar_filtros_busqueda(self, query):
+    def _aplicar_busqueda_general(self, query):
         """Aplica filtros de búsqueda al query"""
-        filtros = []
+        search = request.args.get('busqueda')
 
-        campos_busqueda = {
-            'id': UsuarioModel.id,
-            'nombre': UsuarioModel.nombre,
-            'apellido': UsuarioModel.apellido,
-            'email': UsuarioModel.email,
-            'rol': UsuarioModel.rol
-        }
-
-        for campo, valor in request.args.items():
-            if campo in campos_busqueda:
-                filtros.append(campos_busqueda[campo].like(f"%{valor}%"))
-
-        return query.filter(and_(*filtros)) if filtros else query
+        if search:
+            conditions = [
+                UsuarioModel.nombre.ilike(f'%{search}%'),
+                UsuarioModel.apellido.ilike(f'%{search}%'),
+                UsuarioModel.email.ilike(f'%{search}%'),
+                UsuarioModel.rol.ilike(f'%{search}%'),
+                UsuarioModel.id.ilike(f'%{search}%')
+            ]
+            
+            return query.filter(or_(*conditions))
+        
+        # Si no hay búsqueda, retorna el query original
+        return query
