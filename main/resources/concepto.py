@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import request
 from .. import db
-from sqlalchemy import and_
+from sqlalchemy import or_
 from main.models import ConceptoModel
 from main.auth.decorators import role_required
 
@@ -54,7 +54,7 @@ class Conceptos(Resource):
 
             query = db.session.query(ConceptoModel)
 
-            query = self._aplicar_filtros_busqueda(query)
+            query = self._aplicar_busqueda_general(query)
 
             conceptos = query.paginate(
                 page=page, 
@@ -71,20 +71,19 @@ class Conceptos(Resource):
         except Exception as e:
             return {'message': str(e)}, 500
         
-    def _aplicar_filtros_busqueda(self, query):
+    def _aplicar_busqueda_general(self, query):
         """Aplica filtros de búsqueda al query"""
-        filtros = []
+        search = request.args.get('busqueda')
 
-        campos_busqueda = {
-            'id': ConceptoModel.id,
-            'nombre': ConceptoModel.nombre,
-        }
-    
-        for campo, valor in request.args.items():
-            if campo in campos_busqueda:
-                filtros.append(campos_busqueda[campo].like(f"%{valor}%"))
+        if search:
+            conditions = [
+                ConceptoModel.id.ilike(f'%{search}%'),
+                ConceptoModel.nombre.ilike(f'%{search}%'),
+            ]
 
-        return query.filter(and_(*filtros)) if filtros else query
+            return query.filter(or_(*conditions))
+        
+        return query
 
     @role_required(roles=["admin", "supervisor"])
     def post(self):
