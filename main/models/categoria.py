@@ -16,7 +16,7 @@ class Categoria(db.Model):
         categoria_json = {
             'id': self.id,
             'nombre': self.nombre,
-            'concepto': self.concepto.to_json()
+            'concepto': self.concepto.to_json() if self.concepto is not None else None
         }
         return categoria_json
 

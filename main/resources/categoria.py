@@ -1,9 +1,10 @@
 from flask_restful import Resource
 from flask import request
 from .. import db
-from sqlalchemy import and_
+from sqlalchemy import or_
 from main.models import CategoriaModel
 from main.auth.decorators import role_required
+import re
 
 class Categoria(Resource):
     @role_required(roles=["admin", "supervisor"])
@@ -54,7 +55,7 @@ class Categorias(Resource):
 
             query = db.session.query(CategoriaModel)
 
-            query = self._aplicar_filtros_busqueda(query)
+            query = self._aplicar_busqueda_general(query)
 
             categorias = query.paginate(
                 page=page, 
@@ -72,21 +73,20 @@ class Categorias(Resource):
             return {'message': str(e)}, 500
     
 
-    def _aplicar_filtros_busqueda(self, query):
+    def _aplicar_busqueda_general(self, query):
         """Aplica filtros de búsqueda al query"""
-        filtros = []
+        search = request.args.get('busqueda')
 
-        campos_busqueda = {
-            'id': CategoriaModel.id,
-            'nombre': CategoriaModel.nombre,
-            'id_concepto': CategoriaModel.id_concepto
-        }
+        if search:
+            conditions = [
+                CategoriaModel.id.ilike(f'%{search}%'),
+                CategoriaModel.nombre.ilike(f'%{search}%'),
+                CategoriaModel.concepto.has(CategoriaModel.concepto.property.mapper.class_.nombre.ilike(f'%{search}%'))
+            ]
 
-        for campo, valor in request.args.items():
-            if campo in campos_busqueda:
-                filtros.append(campos_busqueda[campo].like(f"%{valor}%"))
-
-        return query.filter(and_(*filtros)) if filtros else query
+            return query.filter(or_(*conditions))
+        
+        return query
 
     @role_required(roles=["admin", "supervisor"])
     def post(self):
@@ -101,6 +101,10 @@ class Categorias(Resource):
             
             if 'id_concepto' not in data:
                 return {'message': 'Falta el ID del concepto'}, 400
+            
+            if not isinstance(data['id_concepto'], int) and (not isinstance(data['id_concepto'], str) or 
+                not re.match(r'^\d+$', str(data['id_concepto']))):
+                return {'message': 'El ID del concepto debe ser un número entero válido'}, 400
 
             new_categoria = CategoriaModel.from_json(data)
             db.session.add(new_categoria)
