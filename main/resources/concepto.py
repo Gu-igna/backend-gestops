@@ -53,21 +53,29 @@ class Conceptos(Resource):
             per_page = request.args.get('per_page', default=10, type=int)
 
             query = db.session.query(ConceptoModel)
-
             query = self._aplicar_busqueda_general(query)
 
-            conceptos = query.paginate(
-                page=page, 
-                per_page=per_page,
-                error_out=False
-            )
+            if (page == 0 and per_page == 0):
+                conceptos_items = query.all()
+                return {
+                    'conceptos': [concepto.to_json() for concepto in conceptos_items],
+                    'total': len(conceptos_items),
+                    'pages': 1,
+                    'page': 1,
+                }, 200
+            else:
+                conceptos = query.paginate(
+                    page=page, 
+                    per_page=per_page,
+                    error_out=False
+                )
 
-            return {
-                'conceptos': [concepto.to_json() for concepto in conceptos.items],
-                'total': conceptos.total,
-                'pages': conceptos.pages,
-                'page': conceptos.page,
-            }, 200
+                return {
+                    'conceptos': [concepto.to_json() for concepto in conceptos.items],
+                    'total': conceptos.total,
+                    'pages': conceptos.pages,
+                    'page': conceptos.page,
+                }, 200
         except Exception as e:
             return {'message': str(e)}, 500
         
