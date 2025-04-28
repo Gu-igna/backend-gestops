@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import request
 from .. import db
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from main.models import SubcategoriaModel
 from main.auth.decorators import role_required
 
@@ -71,20 +71,38 @@ class Subcategorias(Resource):
         except Exception as e:
             return {'message': str(e)}, 500
 
+    def _aplicar_busqueda_general(self, query):
+        """Aplica búsqueda global sobre varios campos."""
+        search = request.args.get('busqueda')
+
+        if search:
+            conditions = [
+                SubcategoriaModel.nombre.ilike(f'%{search}%'),
+                SubcategoriaModel.categoria.has(
+                    or_(
+                        SubcategoriaModel.categoria.nombre.ilike(f'%{search}%'),
+                        SubcategoriaModel.categoria.concepto.has(
+                            SubcategoriaModel.categoria.concepto.property.mapper.class_.nombre.ilike(f'%{search}%')
+                        )
+                    )
+                )
+            ]
+
+            return query.filter(or_(*conditions))
+        
+        return query
+    
     def _aplicar_filtros_busqueda(self, query):
-        """Aplica filtros de búsqueda al query"""
+        """Aplica filtros específicos por campo."""
         filtros = []
-
         campos_busqueda = {
-            'id': SubcategoriaModel.id,
-            'nombre': SubcategoriaModel.nombre,
-            'id_categoria': SubcategoriaModel.id_categoria,
+            'concepto': SubcategoriaModel.categoria.concepto.nombre,
+            'categoria': SubcategoriaModel.categoria.nombre,
+            'subcategoria': SubcategoriaModel.nombre,
         }
-
         for campo, valor in request.args.items():
             if campo in campos_busqueda:
                 filtros.append(campos_busqueda[campo].like(f"%{valor}%"))
-
         return query.filter(and_(*filtros)) if filtros else query
     
     @role_required(roles=["admin", "supervisor"])
