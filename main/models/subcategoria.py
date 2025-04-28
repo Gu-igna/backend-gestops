@@ -16,7 +16,7 @@ class Subcategoria(db.Model):
         subcategoria_json = {
             'id': self.id,
             'nombre': self.nombre,
-            'categoria': self.categoria.to_json()
+            'categoria': self.categoria.to_json() if self.categoria else None,
         }
         return subcategoria_json
 
