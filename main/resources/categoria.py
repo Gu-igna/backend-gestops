@@ -57,18 +57,27 @@ class Categorias(Resource):
 
             query = self._aplicar_busqueda_general(query)
 
-            categorias = query.paginate(
-                page=page, 
-                per_page=per_page,
-                error_out=False
-            )
+            if (page == 0 and per_page == 0):
+                categorias_items = query.all()
+                return {
+                    'categorias': [categoria.to_json() for categoria in categorias_items],
+                    'total': len(categorias_items),
+                    'pages': 1,
+                    'page': 1,
+                }, 200
+            else:
+                categorias = query.paginate(
+                    page=page, 
+                    per_page=per_page,
+                    error_out=False
+                )
 
-            return {
-                'categorias': [categoria.to_json() for categoria in categorias.items],
-                'total': categorias.total,
-                'pages': categorias.pages,
-                'page': categorias.page,
-            }, 200
+                return {
+                    'categorias': [categoria.to_json() for categoria in categorias.items],
+                    'total': categorias.total,
+                    'pages': categorias.pages,
+                    'page': categorias.page,
+                }, 200
         except Exception as e:
             return {'message': str(e)}, 500
     
